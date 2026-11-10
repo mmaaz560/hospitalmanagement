@@ -6,7 +6,7 @@ import {
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
-import Sidebar from '../component/sidebar';
+import Sidebar from '../component/Sidebar';
 
 const Dashboard = () => {
   // 1. Stats Data (Cards ke liye)

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Sidebar from '../component/sidebar';
+import Sidebar from '../component/Sidebar';
 import { FaSearch, FaPlus, FaEdit, FaTrash, FaFilter } from 'react-icons/fa';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { patientsData } from '../data/patientsData';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Sidebar from '../component/sidebar';
+import Sidebar from '../component/Sidebar';
 import { 
   FaArrowLeft, FaEdit, FaTrash, FaUser, FaPhone, 
   FaEnvelope, FaMapMarkerAlt, FaHeartbeat, FaCalendarCheck, FaNotesMedical 
