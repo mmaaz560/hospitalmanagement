@@ -1,5 +1,5 @@
 import React from 'react';
-import Sidebar from '../component/sidebar';
+import Sidebar from '../component/Sidebar';
 import { FaPlus, FaCheck, FaTimes, FaClock } from 'react-icons/fa';
 
 const Appointments = () => {

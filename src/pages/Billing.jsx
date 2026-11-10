@@ -1,5 +1,5 @@
 import React from 'react';
-import Sidebar from '../component/sidebar';
+import Sidebar from '../component/Sidebar';
 import { FaPlus, FaPrint, FaEye } from 'react-icons/fa';
 
 const Billing = () => {
