@@ -6,16 +6,34 @@ import {
   FaEnvelope, FaMapMarkerAlt, FaHeartbeat, FaCalendarCheck, FaNotesMedical 
 } from 'react-icons/fa';
 import { patientsData } from '../data/patientsData';
+import { useDispatch, useSelector } from 'react-redux';
 
 const PatientDetail = () => {
   const { id } = useParams(); // URL se ID nikalne ke liye
   const navigate = useNavigate();
-
+  const {patients} = useSelector((state)=>state.patients)
   // 🔴 Abhi ke liye Dummy Data (Baad mein isko Redux/LocalStorage se uthana)
-  const patient = patientsData.find(p => p.id ===id)
+  const patient = patients.find((p) => p.id === id);
     if (!patient) {
-    return <div className="p-10 text-center text-red-500 font-bold">Patient Not Found!</div>;
+    return (
+      <div className="flex bg-slate-50 min-h-screen">
+        <Sidebar />
+        <main className="flex-1 lg:ml-64 p-10 flex flex-col items-center justify-center">
+          <h2 className="text-2xl font-bold text-red-500 mb-4">Patient Not Found!</h2>
+          <button onClick={() => navigate('/patients')} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl">
+            Go Back to List
+          </button>
+        </main>
+      </div>
+    );
   }
+  const dispatch = useDispatch()
+    const handleDelete = (e, id) => {
+      e.stopPropagation(); 
+      if (window.confirm('Kya aap sach mein yeh patient delete karna chahte hain?')) {
+        dispatch(deletePatients(id));
+      }
+    };
   return (
     <div className="flex bg-slate-50 min-h-screen">
       <Sidebar />
@@ -37,10 +55,10 @@ const PatientDetail = () => {
           </div>
           
           <div className="flex gap-3">
-            <button className="bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-slate-50 transition flex items-center gap-2 text-sm">
+            <button  onClick={() => navigate(`/patients/edit/${patient.id}`)}  className="bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-slate-50 transition flex items-center gap-2 text-sm">
               <FaEdit className="text-blue-500" /> Edit
             </button>
-            <button className="bg-red-50 text-red-600 px-4 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-red-100 transition flex items-center gap-2 text-sm">
+            <button onClick={(e) => handleDelete(e, patient.id)} className="bg-red-50 text-red-600 px-4 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-red-100 transition flex items-center gap-2 text-sm">
               <FaTrash /> Delete
             </button>
           </div>

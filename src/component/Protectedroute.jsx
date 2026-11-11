@@ -4,6 +4,7 @@ import {useSelector} from 'react-redux';
 
 const ProtectedRoute = ({ children , allowedRoles }) => {
   const { user } = useSelector((state) => state.auth);
+console.log("🔍 ProtectedRoute User:", user); // 🔴 Yeh add karo
 
   //Agar user login nahi hai -> Login page par bhejo
   if (!user) {

@@ -1,36 +1,36 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-// LocalStorage se user uthao (agar pehle se login hai)
-const savedUser = localStorage.getItem('hms_user') ?
-    JSON.parse(localStorage.getItem('hms_user')) :
-    null;
+// 🔴 1. localStorage se data nikalne ka safe tarika
+let savedUser = null;
+try {
+    const rawData = localStorage.getItem('hms_user');
+    if (rawData) {
+        savedUser = JSON.parse(rawData);
+    }
+} catch (error) {
+    console.error("LocalStorage parse error:", error);
+}
 
 const initialState = {
-    user: savedUser, // User ki details (role, name, etc.)
-    loading: false, // Login process chal raha hai ya nahi
-    error: null, // Agar login fail ho
+    user: savedUser, // Ab yeh pakka data load karega
+    loading: false,
+    error: null,
 };
 
 const authSlice = createSlice({
     name: 'auth',
     initialState,
     reducers: {
-        // 🔴 Login Action (Direct reducer, no backend needed)
         loginUser: (state, action) => {
             state.loading = false;
             state.error = null;
-            state.user = action.payload; // { role: 'Admin', name: 'Test User' }
-
-            // LocalStorage mein save karo
+            state.user = action.payload;
+            // 🔴 2. Save karte waqt exact key 'hms_user' use karo
             localStorage.setItem('hms_user', JSON.stringify(action.payload));
         },
-
-        // 🔴 Logout Action
         logoutUser: (state) => {
             state.user = null;
             state.error = null;
-
-            // LocalStorage se hatao
             localStorage.removeItem('hms_user');
         },
     },
