@@ -16,8 +16,12 @@ const doctorSlice = createSlice({
             localStorage.setItem('doctors', JSON.stringify(state.doctors))
         },
         deleteDoctors: (state, action) => {
-            const index = state.doctors.findIndex(doctor => doctor.id === action.payload);
-            localStorage.setItem('doctors', JSON.stringify(state.doctors))
+            console.log("🗑️ Reducer mein ID aayi:", action.payload);
+
+            state.doctors = state.doctors.filter(doc => doc.id !== action.payload);
+            localStorage.setItem('hms_doctors', JSON.stringify(state.doctors));
+
+            console.log("✅ Delete ke baad nayi list:", state.doctors.length);
         },
         updateDoctors: (state, action) => {
             const index = state.doctors.findIndex(doctor => doctor.id === action.payload.id)

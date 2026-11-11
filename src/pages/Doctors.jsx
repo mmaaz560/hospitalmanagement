@@ -62,7 +62,13 @@ const Doctors = () => {
   // Delete Doctor
   const handleDelete = (id) => {
     if (window.confirm('Kya aap sach mein yeh doctor delete karna chahte hain?')) {
+            console.log("✅ Confirm kiya, ab Redux action dispatch ho raha hai...");
+
       dispatch(deleteDoctors(id));
+    }
+    else{
+            console.log("❌ Cancel kar diya gaya.");
+
     }
   };
 
