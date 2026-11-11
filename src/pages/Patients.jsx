@@ -23,14 +23,14 @@ const Patients = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // 🔴 Naya Add karne ke liye modal kholna
+  //  Naya Add karne ke liye modal kholna
   const openAddModal = () => {
     setEditingId(null);
     setFormData({ name: '', age: '', gender: 'Male', phone: '', bloodGroup: 'O+', email: '', address: '' });
     setIsModalOpen(true);
   };
 
-  // 🔴 Edit ke liye modal kholna
+  //  Edit ke liye modal kholna
   const openEditModal = (e, p) => {
     e.stopPropagation(); // Row click rokne ke liye
     setEditingId(p.id);
@@ -40,7 +40,7 @@ const Patients = () => {
     setIsModalOpen(true);
   };
 
-  // 🔴 Form Submit (Add ya Edit)
+  // Form Submit (Add ya Edit)
   const handleAddSubmit = (e) => {
     e.preventDefault();
 

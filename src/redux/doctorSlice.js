@@ -1,7 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit'
+import { doctorsData } from '../data/doctorsData';
+
+const savedDoctors = localStorage.getItem('doctors');
 
 const initialState = {
-    doctors: JSON.parse(localStorage.getItem('doctors')) || []
+    doctors: savedDoctors ? JSON.parse(localStorage.getItem('doctors')) : doctorsData
 }
 
 const doctorSlice = createSlice({

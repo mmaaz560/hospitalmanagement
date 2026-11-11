@@ -11,7 +11,8 @@ import { addPatients } from '../redux/patientSlice';
 const Appointments = () => {
   const dispatch = useDispatch();
   const { appointments } = useSelector((state) => state.appointments);
-const { patients } = useSelector((state) => state.patients); // 🔴 Patients ki list bhi uthao
+const { patients } = useSelector((state) => state.patients); 
+  const { doctors } = useSelector((state) => state.doctors); 
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -189,18 +190,20 @@ const { patients } = useSelector((state) => state.patients); // 🔴 Patients ki
                 <div>
                   <label className="block text-sm font-semibold text-slate-600 mb-1">Select Doctor</label>
                   <select 
-                    name="doctor" 
-                    value={formData.doctor} 
-                    onChange={handleChange} 
-                    required
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  >
-                    <option value="">-- Choose a Doctor --</option>
-                    {/* 🔴 Map lagaya hai taaki data direct file se aaye */}
-                    {doctorsData.map(d => (
-                      <option key={d.id} value={d.name}>{d.name} ({d.specialty})</option>
-                    ))}
-                  </select>
+                     name="doctor" 
+                     value={formData.doctor} 
+                     onChange={handleChange} 
+                     required
+                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                   >
+                     <option value="">-- Choose a Doctor --</option>
+                     {/* 🔴 Loop chalao Redux wale doctors pe */}
+                     {doctors && doctors.map((doc) => (
+                       <option key={doc.id} value={doc.name}>
+                         {doc.name} ({doc.specialty})
+                       </option>
+                     ))}
+                   </select>
                 </div>
 
                 {/* Date & Time */}
