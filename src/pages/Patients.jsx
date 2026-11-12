@@ -12,9 +12,13 @@ const Patients = () => {
   const dispatch = useDispatch();
   const { patients } = useSelector((state) => state.patients);
 
+  // 🔴 PAGINATION STATES
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5); // Ek page par 5 patients
+
   // Modal aur Form ki State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState(null); // 🔴 Track karega ki edit ho raha hai ya add
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     name: '', age: '', gender: 'Male', phone: '', bloodGroup: 'O+', email: '', address: ''
   });
@@ -23,16 +27,14 @@ const Patients = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  //  Naya Add karne ke liye modal kholna
   const openAddModal = () => {
     setEditingId(null);
     setFormData({ name: '', age: '', gender: 'Male', phone: '', bloodGroup: 'O+', email: '', address: '' });
     setIsModalOpen(true);
   };
 
-  //  Edit ke liye modal kholna
   const openEditModal = (e, p) => {
-    e.stopPropagation(); // Row click rokne ke liye
+    e.stopPropagation(); 
     setEditingId(p.id);
     setFormData({
       name: p.name, age: p.age, gender: p.gender, phone: p.phone, bloodGroup: p.bloodGroup, email: p.email, address: p.address
@@ -40,24 +42,21 @@ const Patients = () => {
     setIsModalOpen(true);
   };
 
-  // Form Submit (Add ya Edit)
   const handleAddSubmit = (e) => {
     e.preventDefault();
 
     if (editingId) {
-      // Update Case
       const updatedPatient = {
-        ...patients.find(p => p.id === editingId), // Purana data (jaise medical history) bacha lo
+        ...patients.find(p => p.id === editingId),
         ...formData,
         id: editingId
       };
       dispatch(updatePatients(updatedPatient));
     } else {
-      // Add Case
       const newPatient = {
         id: `P-${Math.floor(Math.random() * 1000) + 100}`, 
         ...formData,
-        status: 'Active',
+        status: 'Outpatient',
         medicalHistory: { allergies: 'None', conditions: 'None', pastSurgeries: 'None' },
         recentAppointments: []
       };
@@ -65,26 +64,18 @@ const Patients = () => {
     }
     
     setIsModalOpen(false);
-    setSearch(''); // 🔴 Fix Issue 1: Search clear karo
+    setSearch(''); 
+    setCurrentPage(1); // 🔴 Add/Edit ke baad wapas page 1 par jao
   };
-    
-   // 🔴 Status Toggle Function (Active -> Critical -> Discharged -> Active)
+
   const toggleStatus = (patient) => {
     let newStatus;
-
-    // Status ke hisaab se agla status decide karo
-    if (patient.status === 'Active') {
-      newStatus = 'Critical';
-    } else if (patient.status === 'Critical') {
-      newStatus = 'Discharged';
-    } else {
-      newStatus = 'Active'; // Agar Discharged hai, toh wapas Active karo
-    }
+    if (patient.status === 'Outpatient') newStatus = 'Active';
+    else if (patient.status === 'Active') newStatus = 'Critical';
+    else if (patient.status === 'Critical') newStatus = 'Discharged';
+    else newStatus = 'Outpatient';
     
-    // Updated patient object banao
     const updatedPatient = { ...patient, status: newStatus };
-    
-    // Redux mein update dispatch karo
     dispatch(updatePatients(updatedPatient));
   };
 
@@ -95,10 +86,20 @@ const Patients = () => {
     }
   };
 
+  // 🔴 SEARCH FILTER
   const filteredPatients = patients.filter(p => 
     p.name.toLowerCase().includes(search.toLowerCase()) || 
     p.id.toLowerCase().includes(search.toLowerCase())
   );
+
+  // 🔴 PAGINATION LOGIC (Calculate karo kaunse patients dikhane hain)
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredPatients.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
+
+  // Page change function
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   return (
     <div className="flex bg-slate-50 min-h-screen">
@@ -132,7 +133,10 @@ const Patients = () => {
                 placeholder="Search by name or ID..." 
                 value={search}
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setCurrentPage(1); // 🔴 Search karte waqt page 1 par wapas aao
+                }}
               />
             </div>
             <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-600 font-medium text-sm hover:bg-slate-50">
@@ -154,52 +158,102 @@ const Patients = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredPatients.map((p) => (
-                  <tr 
-                    key={p.id}
-                    onClick={() => navigate(`/patients/${p.id}`)} 
-                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
-                  >
-                    <td className="p-4 text-sm font-medium text-slate-800">{p.id}</td>
-                    <td className="p-4 text-sm font-bold text-blue-600">{p.name}</td>
-                    <td className="p-4 text-sm text-slate-600">{p.age} Yrs</td>
-                    <td className="p-4 text-sm text-slate-600">{p.gender}</td>
-                    <td className="p-4 text-sm text-slate-600">{p.phone}</td>
- <td className="p-4">
-  <button 
-    onClick={() => toggleStatus(p)} 
-    title="Click to change status"
-    className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer hover:scale-105 hover:shadow-sm ${
-      p.status === 'Active' ? 'bg-green-100 text-green-700 hover:bg-green-200' :
-      p.status === 'Critical' ? 'bg-red-100 text-red-700 hover:bg-red-200' :
-      'bg-gray-100 text-gray-700 hover:bg-gray-200' // Discharged ke liye gray
-    }`}
-  >
-    {p.status}
-  </button>
-</td>
-                    <td className="p-4 flex justify-center gap-3">
-                      <button 
-                        onClick={(e) => openEditModal(e, p)} 
-                        className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded-lg transition"
-                      >
-                        <FaEdit />
-                      </button>
-                      <button 
-                        onClick={(e) => handleDelete(e, p.id)} 
-                        className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition"
-                      >
-                        <FaTrash />
-                      </button>
-                    </td>
+                {/* 🔴 filteredPatients ki jagah currentItems map karo */}
+                {currentItems.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="p-8 text-center text-slate-500">No patients found.</td>
                   </tr>
-                ))}
+                ) : (
+                  currentItems.map((p) => (
+                    <tr 
+                      key={p.id}
+                      onClick={() => navigate(`/patients/${p.id}`)} 
+                      className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    >
+                      <td className="p-4 text-sm font-medium text-slate-800">{p.id}</td>
+                      <td className="p-4 text-sm font-bold text-blue-600">{p.name}</td>
+                      <td className="p-4 text-sm text-slate-600">{p.age} Yrs</td>
+                      <td className="p-4 text-sm text-slate-600">{p.gender}</td>
+                      <td className="p-4 text-sm text-slate-600">{p.phone}</td>
+                      <td className="p-4">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); toggleStatus(p); }}
+                          title="Click to toggle status"
+                          className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer hover:scale-105 hover:shadow-sm ${
+                            p.status === 'Outpatient' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' :
+                            p.status === 'Active' ? 'bg-green-100 text-green-700 hover:bg-green-200' :
+                            p.status === 'Critical' ? 'bg-red-100 text-red-700 hover:bg-red-200' :
+                            'bg-gray-100 text-gray-700 hover:bg-gray-200' 
+                          }`}
+                        >
+                          {p.status}
+                        </button>
+                      </td>
+                      <td className="p-4 flex justify-center gap-3">
+                        <button 
+                          onClick={(e) => openEditModal(e, p)} 
+                          className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded-lg transition"
+                        >
+                          <FaEdit />
+                        </button>
+                        <button 
+                          onClick={(e) => handleDelete(e, p.id)} 
+                          className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition"
+                        >
+                          <FaTrash />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
+
+          {/* 🔴 PAGINATION CONTROLS */}
+          {filteredPatients.length > 0 && (
+            <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-white">
+              <p className="text-sm text-slate-500">
+                Showing <span className="font-bold text-slate-800">{indexOfFirstItem + 1}</span> to <span className="font-bold text-slate-800">{Math.min(indexOfLastItem, filteredPatients.length)}</span> of <span className="font-bold text-slate-800">{filteredPatients.length}</span> entries
+              </p>
+              
+              <div className="flex gap-1">
+                <button 
+                  onClick={() => paginate(currentPage - 1)} 
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  Prev
+                </button>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                  <button
+                    key={number}
+                    onClick={() => paginate(number)}
+                    className={`px-3 py-1.5 rounded-lg border text-sm font-medium transition ${
+                      currentPage === number 
+                        ? 'bg-blue-600 border-blue-600 text-white' 
+                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {number}
+                  </button>
+                ))}
+
+                <button 
+                  onClick={() => paginate(currentPage + 1)} 
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
 
-        {/* ADD / EDIT PATIENT MODAL */}
+        {/* ADD / EDIT PATIENT MODAL (Waisa hi rahega) */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden">

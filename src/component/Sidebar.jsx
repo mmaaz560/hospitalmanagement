@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { useNavigate, NavLink } from 'react-router-dom';
 import { 
   FaHome, FaUserInjured, FaUserMd, FaCalendarAlt, 
   FaFileInvoiceDollar, FaChartBar, FaCog, FaSignOutAlt, 
   FaBars, FaTimes, 
 } from 'react-icons/fa';
 import { MdHealthAndSafety } from 'react-icons/md';
+import { logoutUser } from '../redux/authSlice';
+import { useDispatch } from 'react-redux';
+
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
-
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   // Sidebar Navigation Links
   const menuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: <FaHome /> },
@@ -22,7 +26,15 @@ const Sidebar = () => {
   ];
 
   const toggleMenu = () => setIsOpen(!isOpen);
-
+  
+  // logout function
+  const handlelogout = ()=>{
+    const confirmlogout = window.confirm('Kya aap sach mein logout karna chahte hain?')
+    if(confirmlogout){
+      dispatch(logoutUser())
+      navigate('/')
+    }
+  }
   return (
     <>
       {/* ─── Mobile Menu Button ─── */}
@@ -110,7 +122,9 @@ const Sidebar = () => {
           </div>
 
           {/* Logout Button */}
-          <button className="w-full flex items-center justify-center gap-2 px-4 py-3 text-red-600 font-semibold bg-red-50 hover:bg-red-100 rounded-xl transition-colors duration-200">
+          <button
+          onClick={()=>handlelogout()}
+           className="w-full flex items-center justify-center gap-2 px-4 py-3 text-red-600 font-semibold bg-red-50 hover:bg-red-100 rounded-xl transition-colors duration-200">
             <FaSignOutAlt /> Logout
           </button>
         </div>

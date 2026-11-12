@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import Sidebar from '../component/Sidebar';
-import { FaSearch, FaPlus, FaEdit, FaTrash, FaTimes, FaUserMd } from 'react-icons/fa';
+import { FaSearch, FaPlus, FaEdit, FaTrash, FaTimes, FaUserMd, FaFilter } from 'react-icons/fa';
 import { useSelector, useDispatch } from 'react-redux';
 import { addDoctors, deleteDoctors, updateDoctors } from '../redux/doctorSlice';
 
 const Doctors = () => {
   const [search, setSearch] = useState('');
-  const dispatch = useDispatch();
+  // 🔴 1. Specialization Filter ki state
+  const [selectedSpecialty, setSelectedSpecialty] = useState('All'); 
   
-  // Redux se doctors ka data uthao
+  const dispatch = useDispatch();
   const { doctors } = useSelector((state) => state.doctors);
 
-  // Modal aur Form ki State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
@@ -22,14 +22,12 @@ const Doctors = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Naya Doctor Add karne ke liye
   const openAddModal = () => {
     setEditingId(null);
     setFormData({ name: '', specialty: '', experience: '', phone: '', email: '', status: 'Available' });
     setIsModalOpen(true);
   };
 
-  // Purana Doctor Edit karne ke liye
   const openEditModal = (d) => {
     setEditingId(d.id);
     setFormData({ 
@@ -38,63 +36,54 @@ const Doctors = () => {
     setIsModalOpen(true);
   };
 
-  // Form Submit (Add / Update)
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (editingId) {
-      // Update Case
       const updatedDoctor = { ...doctors.find(d => d.id === editingId), ...formData, id: editingId };
       dispatch(updateDoctors(updatedDoctor));
     } else {
-      // Add Case
       const newDoctor = {
         id: `D-${Math.floor(Math.random() * 1000) + 100}`, 
         ...formData
       };
       dispatch(addDoctors(newDoctor));
     }
-    
     setIsModalOpen(false);
-    setSearch(''); // Search reset karo
+    setSearch(''); 
+    setSelectedSpecialty('All'); // Reset filter on save
   };
-    // 🔴 Status Toggle Function (Available <-> Busy)
+
+  // Status Toggle (Available <-> Busy)
   const toggleStatus = (doctor) => {
-    // Agar Available hai toh Busy karo, warna Available
-    const newStatus = doctor.status === 'Available' ? 'Busy' : 'Available';
+    let newStatus = doctor.status === 'Available' ? 'Busy' : 'Available';
+    if (doctor.status === 'On Leave') newStatus = 'Available'; // Agar On leave hai toh Available karo
     
-    // Updated doctor object banao
     const updatedDoctor = { ...doctor, status: newStatus };
-    
-    // Redux mein update dispatch karo
     dispatch(updateDoctors(updatedDoctor));
   };
 
-  // Delete Doctor
   const handleDelete = (id) => {
     if (window.confirm('Kya aap sach mein yeh doctor delete karna chahte hain?')) {
-            console.log("✅ Confirm kiya, ab Redux action dispatch ho raha hai...");
-
       dispatch(deleteDoctors(id));
-    }
-    else{
-            console.log("❌ Cancel kar diya gaya.");
-
     }
   };
 
-  // Search Filter
-  const filteredDoctors = doctors.filter(d => 
-    d.name.toLowerCase().includes(search.toLowerCase()) || 
-    d.specialty.toLowerCase().includes(search.toLowerCase())
-  );
+  // 🔴 2. Unique Specializations nikaalo dropdown ke liye
+  const specialties = ['All', ...new Set(doctors.map(doc => doc.specialty))];
+
+  // 🔴 3. Filter Logic (Search + Specialization dono check karega)
+  const filteredDoctors = doctors.filter(d => {
+    const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase()) || d.specialty.toLowerCase().includes(search.toLowerCase());
+    const matchesSpecialty = selectedSpecialty === 'All' || d.specialty === selectedSpecialty;
+    return matchesSearch && matchesSpecialty;
+  });
 
   return (
-    <div className="flex  bg-slate-50 min-h-screen">
+    <div className="flex bg-slate-50 min-h-screen">
       <Sidebar />
       <main className="flex-1 lg:ml-64 p-6 lg:p-8 w-full relative">
         
-        {/* ─── Header ─── */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
             <h1 className="text-2xl font-extrabold text-slate-800">Doctors Directory</h1>
@@ -108,22 +97,36 @@ const Doctors = () => {
           </button>
         </div>
 
-        {/* ─── Table Container ─── */}
+        {/* Table Container */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
           
-          {/* Toolbar */}
-          <div className="p-5 border-b border-slate-100 flex justify-between bg-slate-50/50">
+          {/* 🔴 Toolbar with Search & Filter */}
+          <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row gap-4 justify-between bg-slate-50/50">
             <div className="relative w-full sm:w-96">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                 <FaSearch />
               </div>
               <input 
                 type="text" 
-                placeholder="Search doctors by name or specialty..." 
+                placeholder="Search doctors by name..." 
                 value={search}
                 className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                 onChange={(e) => setSearch(e.target.value)}
               />
+            </div>
+            
+            {/* 🔴 Specialization Dropdown */}
+            <div className="flex items-center gap-2">
+              <FaFilter className="text-slate-400" />
+              <select 
+                value={selectedSpecialty}
+                onChange={(e) => setSelectedSpecialty(e.target.value)}
+                className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              >
+                {specialties.map((spec, index) => (
+                  <option key={index} value={spec}>{spec === 'All' ? 'All Specializations' : spec}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -141,58 +144,57 @@ const Doctors = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredDoctors.map((d) => (
-                  <tr key={d.id} className="hover:bg-slate-50/80 cursor-pointer transition-colors">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
-                          {d.name.charAt(4) || 'D'}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-800">{d.name}</p>
-                          <p className="text-xs text-slate-500">{d.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4 text-sm font-medium text-blue-600">{d.specialty}</td>
-                    <td className="p-4 text-sm text-slate-600">{d.experience}</td>
-                    <td className="p-4 text-sm text-slate-600">{d.phone}</td>
-                    <td className="p-4">
-                        {/* 🔴 Clickable Status Badge */}
-                         <button 
-                           onClick={() => toggleStatus(d)}
-                           title="Click to toggle status"
-                           className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer hover:scale-105 hover:shadow-sm ${
-                             d.status === 'Available' ? 'bg-green-100 text-green-700 hover:bg-green-200' :
-                             d.status === 'Busy' ? 'bg-red-100 text-red-700 hover:bg-red-200' :
-                             'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                           }`}
-                         >
-                           {d.status}
-                         </button>
-                    </td>
-                    <td className="p-4 flex justify-center gap-3">
-                      <button 
-                        onClick={() => openEditModal(d)} 
-                        className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded-lg transition"
-                      >
-                        <FaEdit />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(d.id)} 
-                        className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition"
-                      >
-                        <FaTrash />
-                      </button>
-                    </td>
+                {filteredDoctors.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="p-8 text-center text-slate-500 font-medium">No doctors found matching your criteria.</td>
                   </tr>
-                ))}
+                ) : (
+                  filteredDoctors.map((d) => (
+                    <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                            {d.name.charAt(4) || 'D'}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-slate-800">{d.name}</p>
+                            <p className="text-xs text-slate-500">{d.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm font-medium text-blue-600">{d.specialty}</td>
+                      <td className="p-4 text-sm text-slate-600">{d.experience}</td>
+                      <td className="p-4 text-sm text-slate-600">{d.phone}</td>
+                      <td className="p-4">
+                        <button 
+                          onClick={() => toggleStatus(d)}
+                          title="Click to toggle status"
+                          className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer hover:scale-105 hover:shadow-sm ${
+                            d.status === 'Available' ? 'bg-green-100 text-green-700 hover:bg-green-200' :
+                            d.status === 'Busy' ? 'bg-red-100 text-red-700 hover:bg-red-200' :
+                            'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                          }`}
+                        >
+                          {d.status}
+                        </button>
+                      </td>
+                      <td className="p-4 flex justify-center gap-3">
+                        <button onClick={() => openEditModal(d)} className="text-blue-500 hover:text-blue-700 p-2 hover:bg-blue-50 rounded-lg transition">
+                          <FaEdit />
+                        </button>
+                        <button onClick={() => handleDelete(d.id)} className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition">
+                          <FaTrash />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* 🔴 ADD / EDIT DOCTOR MODAL */}
+        {/* ADD / EDIT DOCTOR MODAL (Waisa hi rahega) */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden">
@@ -210,31 +212,26 @@ const Doctors = () => {
               <form onSubmit={handleSubmit} className="p-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   
-                  {/* Name */}
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-semibold text-slate-600 mb-1">Doctor Name</label>
                     <input type="text" name="name" value={formData.name} onChange={handleChange} required placeholder="e.g. Dr. Sarah Ahmed" className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                   </div>
 
-                  {/* Specialty */}
                   <div>
                     <label className="block text-sm font-semibold text-slate-600 mb-1">Specialization</label>
                     <input type="text" name="specialty" value={formData.specialty} onChange={handleChange} required placeholder="e.g. Cardiologist" className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                   </div>
 
-                  {/* Experience */}
                   <div>
                     <label className="block text-sm font-semibold text-slate-600 mb-1">Experience</label>
                     <input type="text" name="experience" value={formData.experience} onChange={handleChange} required placeholder="e.g. 10 Years" className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                   </div>
 
-                  {/* Phone */}
                   <div>
                     <label className="block text-sm font-semibold text-slate-600 mb-1">Phone Number</label>
                     <input type="text" name="phone" value={formData.phone} onChange={handleChange} required placeholder="e.g. 0300-1234567" className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                   </div>
 
-                  {/* Status */}
                   <div>
                     <label className="block text-sm font-semibold text-slate-600 mb-1">Status</label>
                     <select name="status" value={formData.status} onChange={handleChange} className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
@@ -244,7 +241,6 @@ const Doctors = () => {
                     </select>
                   </div>
 
-                  {/* Email */}
                   <div className="sm:col-span-2">
                     <label className="block text-sm font-semibold text-slate-600 mb-1">Email Address</label>
                     <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="e.g. sarah@hms.com" className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />

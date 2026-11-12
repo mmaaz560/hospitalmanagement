@@ -36,11 +36,19 @@ const appointmentSlice = createSlice({
                 state.appointments[index].status = action.payload.status;
                 localStorage.setItem('appointments', JSON.stringify(state.appointments))
             }
+        },
+        rescheduleAppointment: (state, action) => {
+            const index = state.appointments.findIndex(a => a.id === action.payload.id);
+            if (index !== -1) {
+                state.appointments[index].date = action.payload.date;
+                state.appointments[index].time = action.payload.time;
+                localStorage.setItem('hms_appointments', JSON.stringify(state.appointments));
+            }
         }
     }
 });
 
-// 🔴 Export mein teeno ko add karo
-export const { bookAppointment, deleteAppointment, updateAppointmentStatus } = appointmentSlice.actions;
+
+export const { bookAppointment, deleteAppointment, updateAppointmentStatus, rescheduleAppointment } = appointmentSlice.actions;
 
 export default appointmentSlice.reducer;

@@ -1,36 +1,40 @@
 import React, { useState } from 'react';
 import Sidebar from '../component/Sidebar';
-import { FaPlus, FaCheck, FaTimes, FaTrash, FaCalendarPlus } from 'react-icons/fa';
+import { FaPlus, FaCheck, FaTimes, FaTrash, FaCalendarPlus, FaClock } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateAppointmentStatus, deleteAppointment, bookAppointment } from '../redux/appointmentSlice';
+import { 
+  updateAppointmentStatus, 
+  deleteAppointment, 
+  bookAppointment, 
+  rescheduleAppointment 
+} from '../redux/appointmentSlice';
 import { addPatients } from '../redux/patientSlice'; 
 
 const Appointments = () => {
   const dispatch = useDispatch();
+  
+  // Redux se data
   const { appointments } = useSelector((state) => state.appointments);
   const { patients } = useSelector((state) => state.patients); 
   const { doctors } = useSelector((state) => state.doctors); 
 
+  // 🔴 States for Book Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // 🔴 FormData mein saari nayi fields add kar di
   const [formData, setFormData] = useState({
-    patient: '',
-    doctor: '',
-    date: '',
-    time: '',
-    age: '',
-    gender: 'Male',
-    bloodGroup: 'O+',
-    phone: '',
-    email: '',
-    address: ''
+    patient: '', doctor: '', date: '', time: '',
+    age: '', gender: 'Male', bloodGroup: 'O+', phone: '', email: '', address: ''
   });
 
+  // 🔴 States for Reschedule Modal
+  const [isRescheduleOpen, setIsRescheduleOpen] = useState(false);
+  const [rescheduleData, setRescheduleData] = useState({ id: '', date: '', time: '' });
+
+  // Form Inputs handle karna
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // 🔴 Form Submit (Book Appointment)
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -39,7 +43,7 @@ const Appointments = () => {
       (p) => p.name.toLowerCase() === formData.patient.toLowerCase()
     );
 
-    // 2. Agar patient nahi hai, toh naya patient banao (form wali details ke saath)
+    // 2. Agar naya patient hai, toh patients list mein add karo
     if (!patientExists) {
       const newPatient = {
         id: `P-${Math.floor(Math.random() * 1000) + 100}`,
@@ -50,15 +54,14 @@ const Appointments = () => {
         phone: formData.phone || 'N/A',
         email: formData.email || 'N/A',
         address: formData.address || 'N/A',
-        status: 'Active',
+        status: 'Outpatient', 
         medicalHistory: { allergies: 'None', conditions: 'None', pastSurgeries: 'None' },
         recentAppointments: []
       };
-
       dispatch(addPatients(newPatient)); 
     }
 
-    // 3. Ab Appointment Book karo
+    // 3. Appointment Book karo
     const newAppointment = {
       id: `A-${Math.floor(Math.random() * 1000) + 100}`, 
       patient: formData.patient, 
@@ -75,12 +78,29 @@ const Appointments = () => {
     setFormData({ patient: '', doctor: '', date: '', time: '', age: '', gender: 'Male', bloodGroup: 'O+', phone: '', email: '', address: '' }); 
   };
 
+  // 🔴 Reschedule Modal Open karne ka function
+  const openRescheduleModal = (apt) => {
+    setRescheduleData({ id: apt.id, date: apt.date, time: apt.time });
+    setIsRescheduleOpen(true);
+  };
+
+  // 🔴 Reschedule Form Submit
+  const handleRescheduleSubmit = (e) => {
+    e.preventDefault();
+    dispatch(rescheduleAppointment(rescheduleData));
+    setIsRescheduleOpen(false);
+    alert('✅ Appointment Rescheduled successfully!');
+  };
+
+  // Status Functions
   const handleApprove = (id) => dispatch(updateAppointmentStatus({ id, status: 'Confirmed' }));
+  
   const handleCancel = (id) => {
     if (window.confirm("Kya aap is appointment ko cancel karna chahte hain?")) {
       dispatch(updateAppointmentStatus({ id, status: 'Cancelled' }));
     }
   };
+  
   const handleDelete = (id) => {
     if (window.confirm("Kya aap is appointment ko delete karna chahte hain?")) {
       dispatch(deleteAppointment(id));
@@ -106,7 +126,7 @@ const Appointments = () => {
           </button>
         </div>
 
-        {/* Table (Same as before) */}
+        {/* Table */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -140,10 +160,19 @@ const Appointments = () => {
                     </td>
                     <td className="p-4">
                       <div className="flex justify-center gap-2">
+                        
+                        {/* Approve Button (Sirf Pending pe) */}
                         {a.status === 'Pending' && (
                           <button onClick={() => handleApprove(a.id)} className="p-2 text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition" title="Approve"><FaCheck /></button>
                         )}
+
+                        {/* 🔴 Reschedule Button */}
+                        <button onClick={() => openRescheduleModal(a)} className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition" title="Reschedule"><FaClock /></button>
+
+                        {/* Cancel Button */}
                         <button onClick={() => handleCancel(a.id)} className="p-2 text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg transition" title="Cancel"><FaTimes /></button>
+
+                        {/* Delete Button */}
                         <button onClick={() => handleDelete(a.id)} className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition" title="Delete"><FaTrash /></button>
                       </div>
                     </td>
@@ -154,10 +183,9 @@ const Appointments = () => {
           </div>
         </div>
 
-        {/* 🔴 BOOK APPOINTMENT MODAL (Updated & Scrollable) */}
+        {/* 🔴 1. BOOK APPOINTMENT MODAL */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-            {/* max-h-[90vh] aur overflow-y-auto lagaya hai taaki form lamba ho toh scroll ho sake */}
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden animate-[fadeInUp_0.3s_ease-out]">
               
               <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50/50 shrink-0">
@@ -171,7 +199,7 @@ const Appointments = () => {
 
               <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto">
                 
-                {/* 🔴 Patient Input (Datalist) */}
+                {/* Patient Input (Datalist) */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-600 mb-1">Patient Name</label>
                   <input 
@@ -191,7 +219,7 @@ const Appointments = () => {
                   </datalist>
                 </div>
 
-                {/* 🔴 Naye Patient ki Details (Optional) */}
+                {/* Naye Patient ki Details (Optional) */}
                 <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 space-y-3">
                   <p className="text-xs font-semibold text-blue-600 mb-2">Fill below details only if this is a NEW patient</p>
                   
@@ -237,7 +265,7 @@ const Appointments = () => {
                   </div>
                 </div>
 
-                {/* 🔴 Doctor Dropdown */}
+                {/* Doctor Dropdown */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-600 mb-1">Select Doctor</label>
                   <select 
@@ -272,6 +300,54 @@ const Appointments = () => {
                 <div className="flex justify-end gap-3 mt-6 border-t border-slate-100 pt-4 shrink-0">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Cancel</button>
                   <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/30 transition">Book Now</button>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* 🔴 2. RESCHEDULE APPOINTMENT MODAL */}
+        {isRescheduleOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-[fadeInUp_0.3s_ease-out]">
+              
+              <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50/50">
+                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <FaClock className="text-blue-600" /> Reschedule Appointment
+                </h3>
+                <button type="button" onClick={() => setIsRescheduleOpen(false)} className="text-slate-400 hover:text-red-500 transition">
+                  <FaTimes />
+                </button>
+              </div>
+
+              <form onSubmit={handleRescheduleSubmit} className="p-5 space-y-4">
+                
+                <div>
+                  <label className="block text-sm font-semibold text-slate-600 mb-1">New Date</label>
+                  <input 
+                    type="date" 
+                    value={rescheduleData.date} 
+                    onChange={(e) => setRescheduleData({ ...rescheduleData, date: e.target.value })} 
+                    required 
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-600 mb-1">New Time</label>
+                  <input 
+                    type="time" 
+                    value={rescheduleData.time} 
+                    onChange={(e) => setRescheduleData({ ...rescheduleData, time: e.target.value })} 
+                    required 
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3 mt-6">
+                  <button type="button" onClick={() => setIsRescheduleOpen(false)} className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Cancel</button>
+                  <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/30 transition">Update Schedule</button>
                 </div>
 
               </form>
