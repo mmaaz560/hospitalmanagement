@@ -12,8 +12,12 @@ const PatientDetail = () => {
   const { id } = useParams(); // URL se ID nikalne ke liye
   const navigate = useNavigate();
   const {patients} = useSelector((state)=>state.patients)
+  const {appointments} = useSelector((state)=>state.appointments)
   // 🔴 Abhi ke liye Dummy Data (Baad mein isko Redux/LocalStorage se uthana)
   const patient = patients.find((p) => p.id === id);
+  const patientAppointments = appointments.filter(
+    (apt) => apt.patient.toLowerCase() === patient.name.toLowerCase()
+  );
     if (!patient) {
     return (
       <div className="flex bg-slate-50 min-h-screen">
@@ -28,6 +32,25 @@ const PatientDetail = () => {
     );
   }
   const dispatch = useDispatch()
+  // 🔴 Status Toggle Function (Active -> Critical -> Discharged -> Active)
+    const toggleStatus = (patient) => {
+      let newStatus;
+  
+      // Status ke hisaab se agla status decide karo
+      if (patient.status === 'Active') {
+        newStatus = 'Critical';
+      } else if (patient.status === 'Critical') {
+        newStatus = 'Discharged';
+      } else {
+        newStatus = 'Active'; // Agar Discharged hai, toh wapas Active karo
+      }
+      
+      // Updated patient object banao
+      const updatedPatient = { ...patient, status: newStatus };
+      
+      // Redux mein update dispatch karo
+      dispatch(updatePatients(updatedPatient));
+    };
     const handleDelete = (e, id) => {
       e.stopPropagation(); 
       if (window.confirm('Kya aap sach mein yeh patient delete karna chahte hain?')) {
@@ -79,9 +102,17 @@ const PatientDetail = () => {
               <div className="pt-16 text-center">
                 <h2 className="text-xl font-bold text-slate-800">{patient.name}</h2>
                 <p className="text-sm text-slate-500 font-medium">ID: {patient.id}</p>
-                <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">
-                  {patient.status}
-                </span>
+                <button 
+    onClick={() => toggleStatus(patient)} 
+    title="Click to change status"
+    className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer hover:scale-105 hover:shadow-sm ${
+      patient.status === 'Active' ? 'bg-green-100 text-green-700 hover:bg-green-200' :
+      patient.status === 'Critical' ? 'bg-red-100 text-red-700 hover:bg-red-200' :
+      'bg-gray-100 text-gray-700 hover:bg-gray-200' // Discharged ke liye gray
+    }`}
+  >
+    {patient.status}
+  </button>
               </div>
 
               <div className="mt-8 space-y-4">
@@ -167,8 +198,8 @@ const PatientDetail = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {patient.recentAppointments.map((apt) => (
-                      <tr key={apt.id} className="hover:bg-slate-50/80 transition-colors">
+                    {patientAppointments.map((apt) => (
+                      <tr key={appointments.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="p-4 text-sm font-bold text-slate-800">{apt.doctor}</td>
                         <td className="p-4">
                           <div className="text-sm font-medium text-slate-800">{apt.date}</div>

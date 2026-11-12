@@ -58,6 +58,17 @@ const Doctors = () => {
     setIsModalOpen(false);
     setSearch(''); // Search reset karo
   };
+    // 🔴 Status Toggle Function (Available <-> Busy)
+  const toggleStatus = (doctor) => {
+    // Agar Available hai toh Busy karo, warna Available
+    const newStatus = doctor.status === 'Available' ? 'Busy' : 'Available';
+    
+    // Updated doctor object banao
+    const updatedDoctor = { ...doctor, status: newStatus };
+    
+    // Redux mein update dispatch karo
+    dispatch(updateDoctors(updatedDoctor));
+  };
 
   // Delete Doctor
   const handleDelete = (id) => {
@@ -79,7 +90,7 @@ const Doctors = () => {
   );
 
   return (
-    <div className="flex bg-slate-50 min-h-screen">
+    <div className="flex  bg-slate-50 min-h-screen">
       <Sidebar />
       <main className="flex-1 lg:ml-64 p-6 lg:p-8 w-full relative">
         
@@ -131,7 +142,7 @@ const Doctors = () => {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredDoctors.map((d) => (
-                  <tr key={d.id} className="hover:bg-slate-50/80 transition-colors">
+                  <tr key={d.id} className="hover:bg-slate-50/80 cursor-pointer transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
@@ -147,13 +158,18 @@ const Doctors = () => {
                     <td className="p-4 text-sm text-slate-600">{d.experience}</td>
                     <td className="p-4 text-sm text-slate-600">{d.phone}</td>
                     <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        d.status === 'Available' ? 'bg-green-100 text-green-700' :
-                        d.status === 'Busy' ? 'bg-red-100 text-red-700' :
-                        'bg-orange-100 text-orange-700'
-                      }`}>
-                        {d.status}
-                      </span>
+                        {/* 🔴 Clickable Status Badge */}
+                         <button 
+                           onClick={() => toggleStatus(d)}
+                           title="Click to toggle status"
+                           className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer hover:scale-105 hover:shadow-sm ${
+                             d.status === 'Available' ? 'bg-green-100 text-green-700 hover:bg-green-200' :
+                             d.status === 'Busy' ? 'bg-red-100 text-red-700 hover:bg-red-200' :
+                             'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                           }`}
+                         >
+                           {d.status}
+                         </button>
                     </td>
                     <td className="p-4 flex justify-center gap-3">
                       <button 

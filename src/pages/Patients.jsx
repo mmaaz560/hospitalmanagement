@@ -67,6 +67,26 @@ const Patients = () => {
     setIsModalOpen(false);
     setSearch(''); // 🔴 Fix Issue 1: Search clear karo
   };
+    
+   // 🔴 Status Toggle Function (Active -> Critical -> Discharged -> Active)
+  const toggleStatus = (patient) => {
+    let newStatus;
+
+    // Status ke hisaab se agla status decide karo
+    if (patient.status === 'Active') {
+      newStatus = 'Critical';
+    } else if (patient.status === 'Critical') {
+      newStatus = 'Discharged';
+    } else {
+      newStatus = 'Active'; // Agar Discharged hai, toh wapas Active karo
+    }
+    
+    // Updated patient object banao
+    const updatedPatient = { ...patient, status: newStatus };
+    
+    // Redux mein update dispatch karo
+    dispatch(updatePatients(updatedPatient));
+  };
 
   const handleDelete = (e, id) => {
     e.stopPropagation(); 
@@ -145,15 +165,19 @@ const Patients = () => {
                     <td className="p-4 text-sm text-slate-600">{p.age} Yrs</td>
                     <td className="p-4 text-sm text-slate-600">{p.gender}</td>
                     <td className="p-4 text-sm text-slate-600">{p.phone}</td>
-                    <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        p.status === 'Active' ? 'bg-green-100 text-green-700' :
-                        p.status === 'Critical' ? 'bg-red-100 text-red-700' :
-                        'bg-slate-100 text-slate-600'
-                      }`}>
-                        {p.status}
-                      </span>
-                    </td>
+ <td className="p-4">
+  <button 
+    onClick={() => toggleStatus(p)} 
+    title="Click to change status"
+    className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer hover:scale-105 hover:shadow-sm ${
+      p.status === 'Active' ? 'bg-green-100 text-green-700 hover:bg-green-200' :
+      p.status === 'Critical' ? 'bg-red-100 text-red-700 hover:bg-red-200' :
+      'bg-gray-100 text-gray-700 hover:bg-gray-200' // Discharged ke liye gray
+    }`}
+  >
+    {p.status}
+  </button>
+</td>
                     <td className="p-4 flex justify-center gap-3">
                       <button 
                         onClick={(e) => openEditModal(e, p)} 

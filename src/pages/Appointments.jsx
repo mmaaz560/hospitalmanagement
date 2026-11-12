@@ -3,54 +3,58 @@ import Sidebar from '../component/Sidebar';
 import { FaPlus, FaCheck, FaTimes, FaTrash, FaCalendarPlus } from 'react-icons/fa';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateAppointmentStatus, deleteAppointment, bookAppointment } from '../redux/appointmentSlice';
-import { patientsData } from '../data/patientsData'; 
-import { doctorsData } from '../data/doctorsData'; 
 import { addPatients } from '../redux/patientSlice'; 
-// 🔴 Doctors ka data import karo
 
 const Appointments = () => {
   const dispatch = useDispatch();
   const { appointments } = useSelector((state) => state.appointments);
-const { patients } = useSelector((state) => state.patients); 
+  const { patients } = useSelector((state) => state.patients); 
   const { doctors } = useSelector((state) => state.doctors); 
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // 🔴 FormData mein saari nayi fields add kar di
   const [formData, setFormData] = useState({
     patient: '',
-    doctor: '', // 🔴 Default khaali rakha taaki user select kare
+    doctor: '',
     date: '',
-    time: ''
+    time: '',
+    age: '',
+    gender: 'Male',
+    bloodGroup: 'O+',
+    phone: '',
+    email: '',
+    address: ''
   });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-   const handleSubmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     
-    // 1. Check karo ki patient pehle se list mein hai ya nahi
+    // 1. Check karo patient pehle se list mein hai ya nahi
     const patientExists = patients.find(
       (p) => p.name.toLowerCase() === formData.patient.toLowerCase()
     );
 
-    // 2. Agar patient nahi hai, toh naya patient banao
+    // 2. Agar patient nahi hai, toh naya patient banao (form wali details ke saath)
     if (!patientExists) {
       const newPatient = {
-        id: `P-${Math.floor(Math.random() * 1000) + 100}`, // Random ID
+        id: `P-${Math.floor(Math.random() * 1000) + 100}`,
         name: formData.patient,
-        age: 'N/A', // Kyunki form mein age nahi hai
-        gender: 'N/A',
-        bloodGroup: 'N/A',
-        phone: 'N/A',
-        email: 'N/A',
-        address: 'N/A',
+        age: formData.age || 'N/A',
+        gender: formData.gender || 'N/A',
+        bloodGroup: formData.bloodGroup || 'N/A',
+        phone: formData.phone || 'N/A',
+        email: formData.email || 'N/A',
+        address: formData.address || 'N/A',
         status: 'Active',
-        medicalHistory: { allergies: 'N/A', conditions: 'N/A', pastSurgeries: 'N/A' },
+        medicalHistory: { allergies: 'None', conditions: 'None', pastSurgeries: 'None' },
         recentAppointments: []
       };
 
-      // 🔴 Patients list mein automatic add karo
       dispatch(addPatients(newPatient)); 
     }
 
@@ -68,7 +72,7 @@ const { patients } = useSelector((state) => state.patients);
     
     // Form reset karo
     setIsModalOpen(false); 
-    setFormData({ patient: '', doctor: '', date: '', time: '' }); 
+    setFormData({ patient: '', doctor: '', date: '', time: '', age: '', gender: 'Male', bloodGroup: 'O+', phone: '', email: '', address: '' }); 
   };
 
   const handleApprove = (id) => dispatch(updateAppointmentStatus({ id, status: 'Confirmed' }));
@@ -102,7 +106,7 @@ const { patients } = useSelector((state) => state.patients);
           </button>
         </div>
 
-        {/* Table */}
+        {/* Table (Same as before) */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -150,12 +154,13 @@ const { patients } = useSelector((state) => state.patients);
           </div>
         </div>
 
-        {/* BOOK APPOINTMENT MODAL */}
+        {/* 🔴 BOOK APPOINTMENT MODAL (Updated & Scrollable) */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-[fadeInUp_0.3s_ease-out]">
+            {/* max-h-[90vh] aur overflow-y-auto lagaya hai taaki form lamba ho toh scroll ho sake */}
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden animate-[fadeInUp_0.3s_ease-out]">
               
-              <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50/50">
+              <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50/50 shrink-0">
                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                   <FaCalendarPlus className="text-blue-600" /> Book Appointment
                 </h3>
@@ -164,29 +169,75 @@ const { patients } = useSelector((state) => state.patients);
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-5 space-y-4">
+              <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto">
                 
-                {/* Patient Input (Datalist) */}
+                {/* 🔴 Patient Input (Datalist) */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-600 mb-1">Patient Name</label>
                   <input 
                     type="text" 
                     name="patient" 
                     list="patient-list" 
-                    placeholder="Select or type new patient..."
+                    placeholder="Select existing or type new patient..."
                     value={formData.patient} 
                     onChange={handleChange} 
                     required
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   />
                   <datalist id="patient-list">
-                    {patientsData.map(p => (
+                    {patients && patients.map(p => (
                       <option key={p.id} value={p.name} />
                     ))}
                   </datalist>
                 </div>
 
-                {/* 🔴 Doctor Dropdown (Redux/Dynamic Data) */}
+                {/* 🔴 Naye Patient ki Details (Optional) */}
+                <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 space-y-3">
+                  <p className="text-xs font-semibold text-blue-600 mb-2">Fill below details only if this is a NEW patient</p>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">Age</label>
+                      <input type="number" name="age" value={formData.age} onChange={handleChange} placeholder="e.g. 35" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">Gender</label>
+                      <select name="gender" value={formData.gender} onChange={handleChange} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">Phone</label>
+                      <input type="text" name="phone" value={formData.phone} onChange={handleChange} placeholder="0300-1234567" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">Blood Group</label>
+                      <select name="bloodGroup" value={formData.bloodGroup} onChange={handleChange} className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm">
+                        <option value="A+">A+</option><option value="A-">A-</option>
+                        <option value="B+">B+</option><option value="B-">B-</option>
+                        <option value="O+">O+</option><option value="O-">O-</option>
+                        <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Email</label>
+                    <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="patient@email.com" className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm" />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Address</label>
+                    <input type="text" name="address" value={formData.address} onChange={handleChange} placeholder="House 12, Street 1..." className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm" />
+                  </div>
+                </div>
+
+                {/* 🔴 Doctor Dropdown */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-600 mb-1">Select Doctor</label>
                   <select 
@@ -197,7 +248,6 @@ const { patients } = useSelector((state) => state.patients);
                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                    >
                      <option value="">-- Choose a Doctor --</option>
-                     {/* 🔴 Loop chalao Redux wale doctors pe */}
                      {doctors && doctors.map((doc) => (
                        <option key={doc.id} value={doc.name}>
                          {doc.name} ({doc.specialty})
@@ -210,30 +260,16 @@ const { patients } = useSelector((state) => state.patients);
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-slate-600 mb-1">Date</label>
-                    <input 
-                      type="date" 
-                      name="date" 
-                      value={formData.date} 
-                      onChange={handleChange} 
-                      required 
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    />
+                    <input type="date" name="date" value={formData.date} onChange={handleChange} required className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-slate-600 mb-1">Time</label>
-                    <input 
-                      type="time" 
-                      name="time" 
-                      value={formData.time} 
-                      onChange={handleChange} 
-                      required 
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    />
+                    <input type="time" name="time" value={formData.time} onChange={handleChange} required className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
                   </div>
                 </div>
 
                 {/* Buttons */}
-                <div className="flex justify-end gap-3 mt-6">
+                <div className="flex justify-end gap-3 mt-6 border-t border-slate-100 pt-4 shrink-0">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">Cancel</button>
                   <button type="submit" className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-500/30 transition">Book Now</button>
                 </div>

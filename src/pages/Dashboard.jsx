@@ -7,26 +7,53 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 import Sidebar from '../component/Sidebar';
+import { useSelector } from 'react-redux';
 
 const Dashboard = () => {
+    const {patients} = useSelector((state)=>state.patients)
+    const {doctors} = useSelector((state)=>state.doctors)
+    const {appointments} = useSelector((state)=>state.appointments)
+
   // 1. Stats Data (Cards ke liye)
   const stats = [
-    { title: 'Total Patients', value: '1,250', increase: '+12%', icon: <FaUserInjured />, color: 'text-blue-600', bg: 'bg-blue-100' },
-    { title: 'Total Doctors', value: '85', increase: '+5%', icon: <FaUserMd />, color: 'text-indigo-600', bg: 'bg-indigo-100' },
-    { title: 'Appointments', value: '328', increase: '+18%', icon: <FaCalendarCheck />, color: 'text-purple-600', bg: 'bg-purple-100' },
+    { title: 'Total Patients', value: patients.length, increase: '+12%', icon: <FaUserInjured />, color: 'text-blue-600', bg: 'bg-blue-100' },
+    { title: 'Total Doctors', value: doctors.length, increase: '+5%', icon: <FaUserMd />, color: 'text-indigo-600', bg: 'bg-indigo-100' },
+    { title: 'Appointments', value: appointments.length, increase: '+18%', icon: <FaCalendarCheck />, color: 'text-purple-600', bg: 'bg-purple-100' },
     { title: 'Total Revenue', value: '$48,750', increase: '+12%', icon: <FaDollarSign />, color: 'text-emerald-600', bg: 'bg-emerald-100' },
   ];
 
-  // 2. Chart Data (Graph ke liye)
-  const chartData = [
-    { name: 'Mon', appointments: 40 },
-    { name: 'Tue', appointments: 65 },
-    { name: 'Wed', appointments: 50 },
-    { name: 'Thu', appointments: 80 },
-    { name: 'Fri', appointments: 70 },
-    { name: 'Sat', appointments: 95 },
-    { name: 'Sun', appointments: 60 },
-  ];
+   // 1. Din ke hisaab se count nikalne ka function
+  const getChartData = () => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const counts = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
+
+    appointments.forEach((apt) => {
+      if (apt.date) {
+        // Date ko convert karo (YYYY-MM-DD format se)
+        const dateObj = new Date(apt.date);
+        const dayName = days[dateObj.getDay()];
+        
+        // Agar woh valid din hai, toh count barhao
+        if (counts[dayName] !== undefined) {
+          counts[dayName]++;
+        }
+      }
+    });
+
+    // Recharts ke format mein array banao
+    return [
+      { name: 'Mon', appointments: counts['Mon'] },
+      { name: 'Tue', appointments: counts['Tue'] },
+      { name: 'Wed', appointments: counts['Wed'] },
+      { name: 'Thu', appointments: counts['Thu'] },
+      { name: 'Fri', appointments: counts['Fri'] },
+      { name: 'Sat', appointments: counts['Sat'] },
+      { name: 'Sun', appointments: counts['Sun'] },
+    ];
+  };
+
+  const chartData = getChartData();
+
 
   // 3. Recent Activities Data
   const activities = [
