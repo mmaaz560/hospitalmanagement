@@ -72,12 +72,20 @@ const Doctors = () => {
   const specialties = ['All', ...new Set(doctors.map(doc => doc.specialty))];
 
   // 🔴 3. Filter Logic (Search + Specialization dono check karega)
-  const filteredDoctors = doctors.filter(d => {
-    const matchesSearch = d.name.toLowerCase().includes(search.toLowerCase()) || d.specialty.toLowerCase().includes(search.toLowerCase());
+   const filteredDoctors = doctors.filter(d => {
+    // 1. Data ko safe string mein convert karo (agar undefined ho toh khaali string maano)
+    const name = d.name ? d.name.toLowerCase() : '';
+    const specialty = d.specialty ? d.specialty.toLowerCase() : '';
+    const searchLower = search.toLowerCase();
+
+    // 2. Search match logic
+    const matchesSearch = name.includes(searchLower) || specialty.includes(searchLower);
+    
+    // 3. Specialization filter logic
     const matchesSpecialty = selectedSpecialty === 'All' || d.specialty === selectedSpecialty;
+    
     return matchesSearch && matchesSpecialty;
   });
-
   return (
     <div className="flex bg-slate-50 min-h-screen">
       <Sidebar />
