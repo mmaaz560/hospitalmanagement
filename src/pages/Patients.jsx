@@ -86,11 +86,15 @@ const Patients = () => {
     }
   };
 
-  // 🔴 SEARCH FILTER
-  const filteredPatients = patients.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase()) || 
-    p.id.toLowerCase().includes(search.toLowerCase())
-  );
+  
+    // 🔴 SEARCH FILTER (Safe Version)
+  const filteredPatients = patients.filter(p => {
+    const name = p.name ? p.name.toLowerCase() : '';
+    const id = p.id ? p.id.toLowerCase() : '';
+    const searchLower = search.toLowerCase();
+
+    return name.includes(searchLower) || id.includes(searchLower);
+  });
 
   // 🔴 PAGINATION LOGIC (Calculate karo kaunse patients dikhane hain)
   const indexOfLastItem = currentPage * itemsPerPage;

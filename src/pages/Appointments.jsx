@@ -39,8 +39,8 @@ const Appointments = () => {
     e.preventDefault();
     
     // 1. Check karo patient pehle se list mein hai ya nahi
-    const patientExists = patients.find(
-      (p) => p.name.toLowerCase() === formData.patient.toLowerCase()
+   const patientExists = patients.find(
+     (p) => p.name && p.name.toLowerCase() === formData.patient.toLowerCase()
     );
 
     // 2. Agar naya patient hai, toh patients list mein add karo
